@@ -29,10 +29,10 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
     setAllTournaments(tournaments);
 
     if (currentUser) {
-      if (currentUser.type === 'player') {
+      if (currentUser.type === 'jogador') {
         const playerTourns = tournamentStore.getTournamentsByPlayer(currentUser.id);
         setPlayerTournaments(playerTourns);
-      } else if (currentUser.type === 'organizer') {
+      } else if (currentUser.type === 'organizador') {
         const organizerTourns = tournamentStore.getTournamentsByOrganizer(currentUser.id);
         setOrganizerTournaments(organizerTourns);
       }
@@ -41,18 +41,18 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
 
   const getStatusColor = (status: Tournament['status']) => {
     switch (status) {
-      case 'registration': return 'secondary';
-      case 'in-progress': return 'default';
-      case 'completed': return 'destructive';
+      case 'aberto': return 'secondary';
+      case 'em progresso': return 'default';
+      case 'completado': return 'destructive';
       default: return 'outline';
     }
   };
 
   const getStatusText = (status: Tournament['status']) => {
     switch (status) {
-      case 'registration': return 'Registration Open';
-      case 'in-progress': return 'In Progress';
-      case 'completed': return 'Completed';
+      case 'aberto': return 'Aberto';
+      case 'em progresso': return 'Em progresso';
+      case 'completado': return 'Completado';
       default: return 'Unknown';
     }
   };
@@ -70,11 +70,11 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
   };
 
   const renderTournamentCard = (tournament: Tournament, showRegistrationButton = false) => {
-    const isRegistered = currentUser?.type === 'player' && 
+    const isRegistered = currentUser?.type === 'jogador' && 
                         tournament.participants.some(p => p.userId === currentUser.id);
-    const canRegister = currentUser?.type === 'player' && 
+    const canRegister = currentUser?.type === 'jogador' && 
                        !isRegistered && 
-                       tournament.status === 'registration' &&
+                       tournament.status === 'aberto' &&
                        tournament.participants.length < tournament.maxParticipants;
 
     return (
@@ -83,7 +83,7 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <CardTitle className="text-lg">{tournament.name}</CardTitle>
-              <CardDescription>Organized by {tournament.organizerName}</CardDescription>
+              <CardDescription>Organizado por {tournament.organizerName}</CardDescription>
             </div>
             <Badge variant={getStatusColor(tournament.status)}>
               {getStatusText(tournament.status)}
@@ -161,23 +161,23 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
       <div className="mb-8">
         <Button 
           variant="ghost" 
-          onClick={() => onNavigate(currentUser?.type === 'player' ? 'player-dashboard' : 'organizer-dashboard')}
+          onClick={() => onNavigate(currentUser?.type === 'jogador' ? 'player-dashboard' : 'organizer-dashboard')}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
+          Dashboard
         </Button>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Tournaments</h1>
             <p className="text-muted-foreground">
-              {currentUser?.type === 'player' ? 'Discover and join tournaments' : 'Manage your tournaments'}
+              {currentUser?.type === 'jogador' ? 'Discover and join tournaments' : 'Manage your tournaments'}
             </p>
           </div>
-          {currentUser?.type === 'organizer' && (
+          {currentUser?.type === 'organizador' && (
             <Button onClick={() => onNavigate('tournament-creation')} className="flex items-center space-x-2">
               <Plus className="h-4 w-4" />
-              <span>Create Tournament</span>
+              <span>Criar torneio</span>
             </Button>
           )}
         </div>
@@ -188,17 +188,17 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Filter className="h-5 w-5" />
-            <span>Filters</span>
+            <span>Filtros</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
+              <label className="text-sm font-medium">Pesquisar</label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search tournaments..."
+                  placeholder="Pesquisar torneio..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -223,7 +223,7 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Format</label>
+              <label className="text-sm font-medium">Formato</label>
               <Select value={formatFilter} onValueChange={setFormatFilter}>
                 <SelectTrigger>
                   <SelectValue />
@@ -241,18 +241,18 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
         </CardContent>
       </Card>
 
-      <Tabs defaultValue={currentUser?.type === 'player' ? 'all' : 'my-tournaments'} className="space-y-6">
+      <Tabs defaultValue={currentUser?.type === 'jogador' ? 'all' : 'my-tournaments'} className="space-y-6">
 
         <TabsContent value="all" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAllTournaments.length === 0 ? (
               <div className="col-span-full text-center py-8">
                 <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No tournaments found matching your criteria</p>
+                <p className="text-muted-foreground">Sem torneios achados</p>
               </div>
             ) : (
               filteredAllTournaments.map(tournament => 
-                renderTournamentCard(tournament, currentUser?.type === 'player')
+                renderTournamentCard(tournament, currentUser?.type === 'jogador')
               )
             )}
           </div>
@@ -260,7 +260,7 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
 
         <TabsContent value="my-tournaments" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentUser?.type === 'player' ? (
+            {currentUser?.type === 'jogador' ? (
               filteredPlayerTournaments.length === 0 ? (
                 <div className="col-span-full text-center py-8">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -279,12 +279,12 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
               filteredOrganizerTournaments.length === 0 ? (
                 <div className="col-span-full text-center py-8">
                   <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">You haven't created any tournaments yet</p>
+                  <p className="text-muted-foreground">Voce ainda nao criou nenhum torneio</p>
                   <Button 
                     className="mt-4"
                     onClick={() => onNavigate('tournament-creation')}
                   >
-                    Create Your First Tournament
+                    Crie seu primeiro torneio
                   </Button>
                 </div>
               ) : (
@@ -294,12 +294,12 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
           </div>
         </TabsContent>
 
-        {currentUser?.type === 'player' && (
+        {currentUser?.type === 'jogador' && (
           <TabsContent value="available" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredAllTournaments
                 .filter(t => 
-                  t.status === 'registration' && 
+                  t.status === 'aberto' && 
                   !t.participants.some(p => p.userId === currentUser.id) &&
                   t.participants.length < t.maxParticipants
                 )

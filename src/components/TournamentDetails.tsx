@@ -26,7 +26,7 @@ export function TournamentDetails({ onNavigate, tournamentId, currentUser }: Tou
       const foundTournament = tournamentStore.getTournamentById(tournamentId);
       setTournament(foundTournament || null);
       
-      if (foundTournament && currentUser?.type === 'player') {
+      if (foundTournament && currentUser?.type === 'jogador') {
         const isRegistered = foundTournament.participants.some(p => p.userId === currentUser.id);
         const isFull = foundTournament.participants.length >= foundTournament.maxParticipants;
         
@@ -42,7 +42,7 @@ export function TournamentDetails({ onNavigate, tournamentId, currentUser }: Tou
   }, [tournamentId, currentUser]);
 
   const handleRegistration = () => {
-    if (!tournament || !currentUser || currentUser.type !== 'player') return;
+    if (!tournament || !currentUser || currentUser.type !== 'jogador') return;
 
     const success = tournamentStore.registerPlayerForTournament(tournament.id, currentUser.id);
     
@@ -60,7 +60,7 @@ export function TournamentDetails({ onNavigate, tournamentId, currentUser }: Tou
   };
 
   const handleUnregistration = () => {
-    if (!tournament || !currentUser || currentUser.type !== 'player') return;
+    if (!tournament || !currentUser || currentUser.type !== 'jogador') return;
 
     const success = tournamentStore.unregisterPlayerFromTournament(tournament.id, currentUser.id);
     
@@ -79,18 +79,18 @@ export function TournamentDetails({ onNavigate, tournamentId, currentUser }: Tou
 
   const getStatusColor = (status: Tournament['status']) => {
     switch (status) {
-      case 'registration': return 'secondary';
-      case 'in-progress': return 'default';
-      case 'completed': return 'destructive';
+      case 'aberto': return 'secondary';
+      case 'em progresso': return 'default';
+      case 'completado': return 'destructive';
       default: return 'outline';
     }
   };
 
   const getStatusText = (status: Tournament['status']) => {
     switch (status) {
-      case 'registration': return 'Registration Open';
-      case 'in-progress': return 'In Progress';
-      case 'completed': return 'Completed';
+      case 'aberto': return 'Aberto';
+      case 'em progresso': return 'Em progresso';
+      case 'completado': return 'Completado';
       default: return 'Unknown';
     }
   };
@@ -163,16 +163,16 @@ export function TournamentDetails({ onNavigate, tournamentId, currentUser }: Tou
     );
   }
 
-  const canManage = currentUser?.type === 'organizer' && currentUser.id === tournament.organizerId;
-  const canRegister = currentUser?.type === 'player' && registrationStatus === 'not-registered' && tournament.status === 'registration';
-  const canUnregister = currentUser?.type === 'player' && registrationStatus === 'registered' && tournament.status === 'registration';
+  const canManage = currentUser?.type === 'organizador' && currentUser.id === tournament.organizerId;
+  const canRegister = currentUser?.type === 'jogador' && registrationStatus === 'not-registered' && tournament.status === 'registration';
+  const canUnregister = currentUser?.type === 'jogador' && registrationStatus === 'registered' && tournament.status === 'registration';
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <Button 
           variant="ghost" 
-          onClick={() => onNavigate(currentUser?.type === 'player' ? 'player-dashboard' : 'organizer-dashboard')}
+          onClick={() => onNavigate(currentUser?.type === 'jogador' ? 'player-dashboard' : 'organizer-dashboard')}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -191,7 +191,7 @@ export function TournamentDetails({ onNavigate, tournamentId, currentUser }: Tou
                   {getStatusText(tournament.status)}
                 </Badge>
               </div>
-              <p className="text-muted-foreground">Organized by {tournament.organizerName}</p>
+              <p className="text-muted-foreground">Organizado por {tournament.organizerName}</p>
             </div>
             <div className="flex space-x-2">
               {canRegister && (
@@ -261,7 +261,7 @@ export function TournamentDetails({ onNavigate, tournamentId, currentUser }: Tou
         </Alert>
       )}
 
-      {registrationStatus === 'registered' && currentUser?.type === 'player' && (
+      {registrationStatus === 'registered' && currentUser?.type === 'jogador' && (
         <Alert className="mb-6">
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>

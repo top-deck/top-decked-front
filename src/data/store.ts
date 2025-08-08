@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  type: 'player' | 'organizer';
+  type: 'jogador' | 'organizador';
   store?: string;
   dateOfBirth?: string;
   avatar?: string;
@@ -32,7 +32,7 @@ export interface Tournament {
   entryFee: string;
   structure: string;
   rounds: number;
-  status: 'registration' | 'in-progress' | 'completed';
+  status: 'aberto' | 'em progresso' | 'completado';
   currentRound: number;
   participants: TournamentParticipant[];
   matches: Match[];
@@ -65,7 +65,7 @@ export interface Match {
   player2Score: number;
   winnerId?: string;
   winnerName?: string;
-  status: 'pending' | 'in-progress' | 'completed';
+  status: 'abertp' | 'em progresso' | 'completado';
 }
 
 export interface BracketMatch {
@@ -84,7 +84,7 @@ export const mockUsers: User[] = [
     id: 'player-1',
     name: 'Alex Chen',
     email: 'alex.chen@example.com',
-    type: 'player',
+    type: 'jogador',
     store: 'Downtown Comics',
     dateOfBirth: '1995-03-15',
     stats: {
@@ -101,7 +101,7 @@ export const mockUsers: User[] = [
     id: 'organizer-1',
     name: 'Sarah Johnson',
     email: 'sarah.johnson@gamestore.com',
-    type: 'organizer',
+    type: 'organizador',
     store: 'Game Central',
     stats: {
       totalPoints: 0,
@@ -117,7 +117,7 @@ export const mockUsers: User[] = [
     id: 'organizer-2',
     name: 'Carlos Silva',
     email: 'carlos.silva@magichaven.com',
-    type: 'organizer',
+    type: 'organizador',
     store: 'Magic Haven',
     stats: {
       totalPoints: 0,
@@ -133,7 +133,7 @@ export const mockUsers: User[] = [
     id: 'player-2',
     name: 'Mike Rodriguez',
     email: 'mike.rodriguez@example.com',
-    type: 'player',
+    type: 'jogador',
     store: 'Magic Emporium',
     stats: {
       totalPoints: 2250,
@@ -149,7 +149,7 @@ export const mockUsers: User[] = [
     id: 'player-3',
     name: 'Emma Davis',
     email: 'emma.davis@example.com',
-    type: 'player',
+    type: 'jogador',
     store: 'Card Kingdom',
     stats: {
       totalPoints: 2180,
@@ -167,7 +167,7 @@ export const mockUsers: User[] = [
 export const mockTournaments: Tournament[] = [
   {
     id: 'tournament-1',
-    name: 'Weekly Modern Championship',
+    name: 'Torneio 1',
     organizerId: 'organizer-1',
     organizerName: 'Sarah Johnson',
     date: '2024-12-25',
@@ -180,7 +180,7 @@ export const mockTournaments: Tournament[] = [
     entryFee: '$15',
     structure: 'Swiss',
     rounds: 5,
-    status: 'registration',
+    status: 'aberto',
     currentRound: 0,
     participants: [
       {
@@ -211,7 +211,7 @@ export const mockTournaments: Tournament[] = [
   },
   {
     id: 'tournament-2',
-    name: 'Standard Showdown',
+    name: 'Torneio 2 ',
     organizerId: 'organizer-1',
     organizerName: 'Sarah Johnson',
     date: '2024-12-22',
@@ -224,7 +224,7 @@ export const mockTournaments: Tournament[] = [
     entryFee: '$12',
     structure: 'Swiss',
     rounds: 4,
-    status: 'registration',
+    status: 'aberto',
     currentRound: 0,
     participants: [],
     matches: [],
@@ -232,7 +232,7 @@ export const mockTournaments: Tournament[] = [
   },
   {
     id: 'tournament-3',
-    name: 'Friday Night Magic',
+    name: 'Torneio 3',
     organizerId: 'organizer-1',
     organizerName: 'Sarah Johnson',
     date: '2024-12-15',
@@ -245,7 +245,7 @@ export const mockTournaments: Tournament[] = [
     entryFee: '$10',
     structure: 'Single Elimination',
     rounds: 4,
-    status: 'completed',
+    status: 'completado',
     currentRound: 4,
     participants: [
       {
@@ -296,7 +296,7 @@ export const mockTournaments: Tournament[] = [
         player2Score: 1,
         winnerId: 'player-1',
         winnerName: 'Alex Chen',
-        status: 'completed'
+        status: 'completado'
       }
     ],
     bracket: [
@@ -419,7 +419,7 @@ class TournamentStore {
     const newTournament: Tournament = {
       ...tournamentData,
       id: `tournament-${Date.now()}`,
-      status: 'registration',
+      status: 'aberto',
       currentRound: 0,
       participants: [],
       matches: [],
@@ -481,7 +481,7 @@ class TournamentStore {
   // Rankings
   getPlayerRankings(): User[] {
     return this.users
-      .filter(u => u.type === 'player' && u.stats)
+      .filter(u => u.type === 'jogador' && u.stats)
       .sort((a, b) => (b.stats?.totalPoints || 0) - (a.stats?.totalPoints || 0));
   }
 
