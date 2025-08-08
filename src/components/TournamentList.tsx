@@ -154,7 +154,7 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
   const filteredOrganizerTournaments = filterTournaments(organizerTournaments);
 
   const availableFormats = ['all', ...Array.from(new Set(allTournaments.map(t => t.format)))];
-  const availableStatuses = ['all', 'registration', 'in-progress', 'completed'];
+  const availableStatuses = ['all', 'aberto', 'em progresso', 'completado'];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -215,7 +215,7 @@ export function TournamentList({ onNavigate, onNavigateToTournament, currentUser
                 <SelectContent>
                   {availableStatuses.map(status => (
                     <SelectItem key={status} value={status}>
-                      {status === 'all' ? 'All Statuses' : getStatusText(status as Tournament['status'])}
+                      {status === 'all' ? 'Todos' : getStatusText(status as Tournament['status'])}
                     </SelectItem>
                   ))}
                 </SelectContent>
