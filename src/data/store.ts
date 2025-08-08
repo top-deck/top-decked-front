@@ -78,6 +78,7 @@ export interface BracketMatch {
   score?: string;
 }
 
+// Mock Users
 export const mockUsers: User[] = [
   {
     id: 'player-1',
@@ -108,7 +109,7 @@ export const mockUsers: User[] = [
       losses: 0,
       draws: 0,
       winRate: 0,
-      tournaments: 85, 
+      tournaments: 85, // tournaments organized
       rank: 0
     }
   },
@@ -124,7 +125,7 @@ export const mockUsers: User[] = [
       losses: 0,
       draws: 0,
       winRate: 0,
-      tournaments: 42, 
+      tournaments: 42, // tournaments organized
       rank: 0
     }
   },
@@ -162,7 +163,7 @@ export const mockUsers: User[] = [
   }
 ];
 
-
+// Mock Tournaments
 export const mockTournaments: Tournament[] = [
   {
     id: 'tournament-1',
@@ -313,7 +314,7 @@ export const mockTournaments: Tournament[] = [
   }
 ];
 
-
+// Store class for managing state
 class TournamentStore {
   private subscribers: (() => void)[] = [];
   private users: User[] = [...mockUsers];
@@ -330,7 +331,7 @@ class TournamentStore {
   private notifySubscribers() {
     this.subscribers.forEach(callback => callback());
   }
-
+  // User management
   setCurrentUser(user: User | null) {
     this.currentUser = user;
   }
@@ -370,7 +371,7 @@ class TournamentStore {
     return newUser;
   }
 
-  
+  // Tournament management
   getAllTournaments(): Tournament[] {
     return this.tournaments;
   }
@@ -383,6 +384,28 @@ class TournamentStore {
     return this.tournaments.filter(t => t.organizerId === organizerId);
   }
 
+  getTournamentsByPlayer(playerId: string): Tournament[] {
+    return this.tournaments.filter(t => 
+      t.participants.some(p => p.userId === playerId)
+    );
+  }
+  updateTournamentMatches(tournamentId: string, matches: Match[]): boolean {
+    const tournament = this.getTournamentById(tournamentId);
+    if (!tournament) return false;
+    
+    tournament.matches = matches;
+    this.notifySubscribers();
+    return true;
+  }
+
+  updateTournamentParticipants(tournamentId: string, participants: TournamentParticipant[]): boolean {
+    const tournament = this.getTournamentById(tournamentId);
+    if (!tournament) return false;
+    
+    tournament.participants = participants;
+    this.notifySubscribers();
+    return true;
+  }
 
   updateTournament(updatedTournament: Tournament): boolean {
     const index = this.tournaments.findIndex(t => t.id === updatedTournament.id);
@@ -405,6 +428,91 @@ class TournamentStore {
     this.tournaments.push(newTournament);
     this.notifySubscribers(); // Notifica sobre a mudança
     return newTournament;
+  }
+
+  registerPlayerForTournament(tournamentId: string, playerId: string): boolean {
+    const tournament = this.getTournamentById(tournamentId);
+    const player = this.getUserById(playerId);
+    
+    if (!tournament || !player || tournament.participants.length >= tournament.maxParticipants) {
+      return false;
+    }
+
+    const isAlreadyRegistered = tournament.participants.some(p => p.userId === playerId);
+    if (isAlreadyRegistered) {
+      return false;
+    }
+
+    const participant: TournamentParticipant = {
+      id: `participant-${Date.now()}`,
+      userId: playerId,
+      userName: player.name,
+      registeredAt: new Date().toISOString(),
+      points: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      currentStanding: tournament.participants.length + 1
+    };
+
+    tournament.participants.push(participant);
+    return true;
+  }
+
+  unregisterPlayerFromTournament(tournamentId: string, playerId: string): boolean {
+    const tournament = this.getTournamentById(tournamentId);
+    if (!tournament) return false;
+
+    const participantIndex = tournament.participants.findIndex(p => p.userId === playerId);
+    if (participantIndex === -1) return false;
+
+    tournament.participants.splice(participantIndex, 1);
+    return true;
+  }
+
+  updateTournamentStatus(tournamentId: string, status: Tournament['status']): boolean {
+    const tournament = this.getTournamentById(tournamentId);
+    if (!tournament) return false;
+
+    tournament.status = status;
+    return true;
+  }
+
+  // Rankings
+  getPlayerRankings(): User[] {
+    return this.users
+      .filter(u => u.type === 'player' && u.stats)
+      .sort((a, b) => (b.stats?.totalPoints || 0) - (a.stats?.totalPoints || 0));
+  }
+
+  getRankingsByOrganizer(organizerId: string): User[] {
+    const organizerTournaments = this.getTournamentsByOrganizer(organizerId);
+    const playerStats = new Map<string, { points: number; tournaments: number; wins: number; losses: number; draws: number }>();
+
+    organizerTournaments.forEach(tournament => {
+      tournament.participants.forEach(participant => {
+        const existing = playerStats.get(participant.userId) || { points: 0, tournaments: 0, wins: 0, losses: 0, draws: 0 };
+        existing.points += participant.points;
+        existing.tournaments += 1;
+        existing.wins += participant.wins;
+        existing.losses += participant.losses;
+        existing.draws += participant.draws;
+        playerStats.set(participant.userId, existing);
+      });
+    });
+
+    const rankings: (User & { organizerStats: any })[] = [];
+    playerStats.forEach((stats, userId) => {
+      const user = this.getUserById(userId);
+      if (user) {
+        rankings.push({
+          ...user,
+          organizerStats: stats
+        });
+      }
+    });
+
+    return rankings.sort((a, b) => b.organizerStats.points - a.organizerStats.points);
   }
 }
 

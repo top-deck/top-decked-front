@@ -1,0 +1,314 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card.tsx';
+import { Button } from './ui/button.tsx';
+import { Badge } from './ui/badge.tsx';
+import { Input } from './ui/input.tsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.tsx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.tsx';
+import { Calendar, Users, Trophy, MapPin, Search, Filter, Plus, ArrowLeft } from 'lucide-react';
+import { tournamentStore, Tournament, User } from '../data/store.ts';
+
+type Page = 'login' | 'player-dashboard' | 'organizer-dashboard' | 'tournament-creation' | 'tournament-management' | 'ranking' | 'player-profile' | 'subscription' | 'tournament-details' | 'tournament-list';
+
+interface TournamentListProps {
+  onNavigate: (page: Page, data?: any) => void;
+  onNavigateToTournament: (tournamentId: string) => void;
+  currentUser: User | null;
+}
+
+export function TournamentList({ onNavigate, onNavigateToTournament, currentUser }: TournamentListProps) {
+  const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
+  const [playerTournaments, setPlayerTournaments] = useState<Tournament[]>([]);
+  const [organizerTournaments, setOrganizerTournaments] = useState<Tournament[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [formatFilter, setFormatFilter] = useState('all');
+
+  useEffect(() => {
+    const tournaments = tournamentStore.getAllTournaments();
+    setAllTournaments(tournaments);
+
+    if (currentUser) {
+      if (currentUser.type === 'player') {
+        const playerTourns = tournamentStore.getTournamentsByPlayer(currentUser.id);
+        setPlayerTournaments(playerTourns);
+      } else if (currentUser.type === 'organizer') {
+        const organizerTourns = tournamentStore.getTournamentsByOrganizer(currentUser.id);
+        setOrganizerTournaments(organizerTourns);
+      }
+    }
+  }, [currentUser]);
+
+  const getStatusColor = (status: Tournament['status']) => {
+    switch (status) {
+      case 'registration': return 'secondary';
+      case 'in-progress': return 'default';
+      case 'completed': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const getStatusText = (status: Tournament['status']) => {
+    switch (status) {
+      case 'registration': return 'Registration Open';
+      case 'in-progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      default: return 'Unknown';
+    }
+  };
+
+  const filterTournaments = (tournaments: Tournament[]) => {
+    return tournaments.filter(tournament => {
+      const matchesSearch = tournament.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           tournament.organizerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           tournament.store.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || tournament.status === statusFilter;
+      const matchesFormat = formatFilter === 'all' || tournament.format.toLowerCase() === formatFilter.toLowerCase();
+      
+      return matchesSearch && matchesStatus && matchesFormat;
+    });
+  };
+
+  const renderTournamentCard = (tournament: Tournament, showRegistrationButton = false) => {
+    const isRegistered = currentUser?.type === 'player' && 
+                        tournament.participants.some(p => p.userId === currentUser.id);
+    const canRegister = currentUser?.type === 'player' && 
+                       !isRegistered && 
+                       tournament.status === 'registration' &&
+                       tournament.participants.length < tournament.maxParticipants;
+
+    return (
+      <Card key={tournament.id} className="hover:shadow-lg transition-shadow">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <CardTitle className="text-lg">{tournament.name}</CardTitle>
+              <CardDescription>Organized by {tournament.organizerName}</CardDescription>
+            </div>
+            <Badge variant={getStatusColor(tournament.status)}>
+              {getStatusText(tournament.status)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span>{new Date(tournament.date).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span>{tournament.store}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+              <span>{tournament.format}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span>{tournament.participants.length}/{tournament.maxParticipants}</span>
+            </div>
+          </div>
+          
+          {tournament.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {tournament.description}
+            </p>
+          )}
+          
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <span className="font-medium">Entry:</span> {tournament.entryFee}
+            </div>
+            <div className="flex space-x-2">
+              {isRegistered && (
+                <Badge variant="default" className="text-xs">Registered</Badge>
+              )}
+              {canRegister && showRegistrationButton && (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigateToTournament(tournament.id);
+                  }}
+                >
+                  Register
+                </Button>
+              )}
+              <Button 
+                size="sm"
+                onClick={() => onNavigateToTournament(tournament.id)}
+              >
+                View Details
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const filteredAllTournaments = filterTournaments(allTournaments);
+  const filteredPlayerTournaments = filterTournaments(playerTournaments);
+  const filteredOrganizerTournaments = filterTournaments(organizerTournaments);
+
+  const availableFormats = ['all', ...Array.from(new Set(allTournaments.map(t => t.format)))];
+  const availableStatuses = ['all', 'registration', 'in-progress', 'completed'];
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <Button 
+          variant="ghost" 
+          onClick={() => onNavigate(currentUser?.type === 'player' ? 'player-dashboard' : 'organizer-dashboard')}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Tournaments</h1>
+            <p className="text-muted-foreground">
+              {currentUser?.type === 'player' ? 'Discover and join tournaments' : 'Manage your tournaments'}
+            </p>
+          </div>
+          {currentUser?.type === 'organizer' && (
+            <Button onClick={() => onNavigate('tournament-creation')} className="flex items-center space-x-2">
+              <Plus className="h-4 w-4" />
+              <span>Create Tournament</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Filter className="h-5 w-5" />
+            <span>Filters</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Search</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tournaments..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableStatuses.map(status => (
+                    <SelectItem key={status} value={status}>
+                      {status === 'all' ? 'All Statuses' : getStatusText(status as Tournament['status'])}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Format</label>
+              <Select value={formatFilter} onValueChange={setFormatFilter}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFormats.map(format => (
+                    <SelectItem key={format} value={format}>
+                      {format === 'all' ? 'All Formats' : format}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs defaultValue={currentUser?.type === 'player' ? 'all' : 'my-tournaments'} className="space-y-6">
+
+        <TabsContent value="all" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAllTournaments.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No tournaments found matching your criteria</p>
+              </div>
+            ) : (
+              filteredAllTournaments.map(tournament => 
+                renderTournamentCard(tournament, currentUser?.type === 'player')
+              )
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="my-tournaments" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentUser?.type === 'player' ? (
+              filteredPlayerTournaments.length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">You haven't participated in any tournaments yet</p>
+                  <Button 
+                    className="mt-4"
+                    onClick={() => onNavigate('tournament-list')}
+                  >
+                    Browse Tournaments
+                  </Button>
+                </div>
+              ) : (
+                filteredPlayerTournaments.map(tournament => renderTournamentCard(tournament))
+              )
+            ) : (
+              filteredOrganizerTournaments.length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">You haven't created any tournaments yet</p>
+                  <Button 
+                    className="mt-4"
+                    onClick={() => onNavigate('tournament-creation')}
+                  >
+                    Create Your First Tournament
+                  </Button>
+                </div>
+              ) : (
+                filteredOrganizerTournaments.map(tournament => renderTournamentCard(tournament))
+              )
+            )}
+          </div>
+        </TabsContent>
+
+        {currentUser?.type === 'player' && (
+          <TabsContent value="available" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAllTournaments
+                .filter(t => 
+                  t.status === 'registration' && 
+                  !t.participants.some(p => p.userId === currentUser.id) &&
+                  t.participants.length < t.maxParticipants
+                )
+                .map(tournament => renderTournamentCard(tournament, true))
+              }
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
+    </div>
+  );
+}

@@ -3,6 +3,10 @@ import { Header } from './components/Header.tsx';
 import { LoginScreen } from './components/LoginScreen.tsx';
 import { PlayerDashboard } from './components/PlayerDashboard.tsx';
 import { OrganizerDashboard } from './components/OrganizerDashboard.tsx';
+import { TournamentCreation } from './components/TournamentCreation.tsx';
+import { TournamentManagement } from './components/TournamentManagement.tsx';
+import { TournamentDetails } from './components/TournamentDetails.tsx';
+import { TournamentList } from './components/TournamentList.tsx';
 import { tournamentStore, User } from './data/store.ts';
 
 type Page = 'login' | 'player-dashboard' | 'organizer-dashboard' | 'tournament-creation' | 'tournament-management' | 'ranking' | 'player-profile' | 'subscription' | 'tournament-details' | 'tournament-list';
@@ -55,6 +59,37 @@ export default function App() {
         return (
           <OrganizerDashboard 
             onNavigate={handleNavigate}
+            currentUser={currentUser}
+          />
+        );
+      case 'tournament-creation':
+        return (
+          <TournamentCreation 
+            onNavigate={handleNavigate}
+            currentUser={currentUser}
+          />
+        );
+      case 'tournament-management':
+        return (
+          <TournamentManagement 
+            onNavigate={handleNavigate}
+            tournamentId={selectedTournamentId}
+            currentUser={currentUser}
+          />
+        );
+      case 'tournament-details':
+        return (
+          <TournamentDetails
+            onNavigate={handleNavigate}
+            tournamentId={selectedTournamentId}
+            currentUser={currentUser}
+          />
+        );
+      case 'tournament-list':
+        return (
+          <TournamentList
+            onNavigate={handleNavigate}
+            onNavigateToTournament={handleNavigateToTournament}
             currentUser={currentUser}
           />
         );
