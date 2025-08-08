@@ -4,7 +4,7 @@ import { Badge } from './ui/badge.tsx';
 import { Trophy, BarChart3, LogOut, List, Calendar, CreditCard } from 'lucide-react';
 import { User as UserType } from '../data/store';
 
-type Page = 'login' | 'player-dashboard' | 'organizer-dashboard';
+type Page = 'login' | 'player-dashboard' | 'organizer-dashboard' | 'tournament-list' | 'ranking' | 'tournament-creation' | 'subscription';
 
 interface HeaderProps {
   userType: UserType['type'] | null;
@@ -46,7 +46,7 @@ export function Header({ userType, onNavigate, onLogout, currentPage, currentUse
             {/* Botão Torneios */}
             <Button
               variant="ghost"
-              onClick={navigateToDashboard}
+              onClick={() => onNavigate('tournament-list')}
               className="p-2 md:px-4 md:py-2 flex items-center justify-center md:justify-start md:space-x-2"
             >
               <List className="h-4 w-4" />
@@ -57,7 +57,7 @@ export function Header({ userType, onNavigate, onLogout, currentPage, currentUse
             {/* Botão Rankings */}
             <Button
               variant="ghost"
-              onClick={navigateToDashboard}
+              
               className="p-2 md:px-4 md:py-2 flex items-center justify-center md:justify-start md:space-x-2"
             >
               <Trophy className="h-4 w-4" />
@@ -69,7 +69,7 @@ export function Header({ userType, onNavigate, onLogout, currentPage, currentUse
             {userType === 'organizer' && (
               <Button
                 variant="ghost"
-                onClick={navigateToDashboard}
+                onClick={() => onNavigate('tournament-creation')}
                 className="p-2 md:px-4 md:py-2 flex items-center justify-center md:justify-start md:space-x-2"
               >
                 <Calendar className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function Header({ userType, onNavigate, onLogout, currentPage, currentUse
             {userType === 'organizer' && (
               <Button
                 variant="ghost"
-                onClick={navigateToDashboard}
+                
                 className="p-2 md:px-4 md:py-2 flex items-center justify-center md:justify-start md:space-x-2"
               >
                 <CreditCard className="h-4 w-4" />
